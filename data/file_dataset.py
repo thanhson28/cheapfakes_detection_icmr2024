@@ -1,6 +1,6 @@
-# Copyright 2022 The OFA-Sys Team. 
+# Copyright 2022 The OFA-Sys Team.
 # All rights reserved.
-# This source code is licensed under the Apache 2.0 license 
+# This source code is licensed under the Apache 2.0 license
 # found in the LICENSE file in the root directory.
 
 import os
@@ -103,6 +103,5 @@ class FileDataset:
             self._reader = self._get_reader()
         column_l = self._reader.readline().rstrip("\n").split(self.separator)
         self.data_cnt += 1
-        # import ipdb; ipdb.set_trace()
         column_l = [dtype(column_l[col_id]) for col_id, dtype in zip(self.selected_col_ids, self.dtypes)]
         return column_l
