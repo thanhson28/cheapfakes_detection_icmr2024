@@ -37,8 +37,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ofa.evaluate")
 
-IMG_PREFIX = os.environ.get("IMG_PREFIX", None)
-assert IMG_PREFIX is not None, "Please set IMG_PREFIX environment variable"
+IMG_PREFIX = os.environ.get("INPUT_FOLDER", None)
+assert IMG_PREFIX is not None, "Please set INPUT_FOLDER environment variable"
 
 def apply_half(t):
     if t.dtype is torch.float32:
