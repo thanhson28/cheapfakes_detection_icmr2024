@@ -22,6 +22,7 @@ from io import BytesIO
 from tqdm import tqdm
 import base64
 import json
+import re
 
 CONTEXT = {
     'yes': 0,
@@ -211,25 +212,101 @@ def main(cfg: DictConfig, **kwargs):
     dataset=task.dataset(cfg.dataset.gen_subset)
     datalines = data_fl.readlines()
 
-    tp = 0
+    tp_task1 = 0
+    tp_task2 = 0
     sum = 0
+    sum_ooc = 0
+    sum_nooc = 0
     for i,dataline in tqdm(enumerate(datalines)):
         if i < 0.5*len(datalines):
+            data_point = json.loads(dataline)
             continue
-        data_point = json.loads(dataline)
+        # import ipdb; ipdb.set_trace()
+        try:
+            data_point = json.loads(dataline)
+        except:
+            print('go here 1')
+            continue
         img_path = os.path.join(IMG_PREFIX, data_point['img_local_path'])
         caption1 = data_point['caption1']
         caption2 = data_point['caption2']
 
-        sample=data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg)
-        result, scores, valid_result = eval_step(
+        try:
+            sample=data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg)
+        except:
+            import ipdb; ipdb.set_trace()
+            print('go here 2')
+            continue
+        result1, scores1, valid_result1 = eval_step(
             task, None, models, sample, **kwargs)
         
-        if CONTEXT[result[0]['answer']] == data_point['context_label']:
-            tp += 1
-        print(result, scores, valid_result)
+        # if CONTEXT[result[0]['answer']] == data_point['context_label']:
+        #     tp += 1
+
+        sample=data_preprocess(dataset, img_path, caption2, caption1, use_cuda, cfg)
+        result2, scores2, valid_result2 = eval_step(
+            task, None, models, sample, **kwargs)
+        
+        valid_result = valid_result1 + valid_result2
+        answer = valid_result.argmax(1)
+        if answer == 1:
+            answer = 'yes'
+        else:
+            answer = 'no'
+        
+        # if CONTEXT[result1[0]['answer']]== 1 or CONTEXT[result2[0]['answer']] == 1:
+        #     answer = 'no'
+        # else:
+        #     answer = 'yes'
+        # if CONTEXT[result1[0]['answer']] == data_point['context_label']:
+        #     tp_task1 += 1
+        if CONTEXT[answer] == data_point['context_label']:
+            tp_task1 += 1
+        try:
+            sample=data_preprocess(dataset, img_path, caption1, "", use_cuda, cfg)
+        except:
+            print('go here 2')
+            continue
+        result1, scores1, valid_result1 = eval_step(
+            task, None, models, sample, **kwargs)
+    
+        sample=data_preprocess(dataset, img_path, "", caption1, use_cuda, cfg)
+        result2, scores2, valid_result2 = eval_step(
+            task, None, models, sample, **kwargs)
+        
+        valid_result = valid_result1 + valid_result2
+        answer = valid_result.argmax(1)
+        if answer == 1:
+            answer = 'yes'
+        else:
+            answer = 'no'
+        if CONTEXT[answer] == data_point['context_label']:
+            tp_task2 += 1
+        
+        from ptflops import get_model_complexity_info
+        # import ipdb; ipdb.set_trace()
+        macs, params = get_model_complexity_info(models[0], sample, task, as_strings=True,
+            print_per_layer_stat=False, verbose=False)
+        # Extract the numerical value
+        flops = eval(re.findall(r'([\d.]+)', macs)[0])*2
+
+        # Extract the unit
+        flops_unit = re.findall(r'([A-Za-z]+)', macs)[0][0]
+        print('Computational complexity: {:<8}'.format(macs))
+        print('Computational complexity: {} {}Flops'.format(flops, flops_unit))
+        print('Number of parameters: {:<8}'.format(params))
+        # if CONTEXT[result1[0]['answer']] == data_point['context_label']:
+        #     tp_task1 += 1
+        # if CONTEXT[answer] == data_point['context_label']:
+        #     tp += 1
+            
+        # print(result, scores, valid_result)
         sum += 1
-    print("Accuracy: ", tp/500)
+    print("sum: ", sum)
+    print("Accuracy task 1: ", tp_task1/sum)
+    print("Accuracy task 2: ", tp_task2/sum)
+    print("OOC: ", sum_ooc)
+    print("NOOC: ", sum_nooc)
 
 def cli_main():
     parser = options.get_generation_parser()
