@@ -16,6 +16,7 @@ from ptflops import get_model_complexity_info
 from fairseq.dataclass.utils import convert_namespace_to_omegaconf
 from fairseq.utils import reset_logging
 from omegaconf import DictConfig
+import time
 
 from utils import checkpoint_utils
 from utils.eval_utils import eval_step
@@ -64,7 +65,7 @@ def data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg):
         label = 'maybe'
     else:
         raise NotImplementedError
-    
+
     image = Image.open(BytesIO(base64.urlsafe_b64decode(image)))
     patch_image = dataset.patch_resize_transform(image)
     patch_mask = torch.tensor([True])
@@ -217,6 +218,8 @@ def main(cfg: DictConfig, **kwargs):
     predict_context_task = []
     gt_context_task = []
     GFlops = 0
+    total_forward_time = 0
+    total_bidirectional_time = 0
     for i,dataline in tqdm(enumerate(datalines)):
         data_point = json.loads(dataline)
         img_path = os.path.join(IMG_PREFIX, data_point['img_local_path'])
@@ -224,22 +227,28 @@ def main(cfg: DictConfig, **kwargs):
         caption2 = data_point['caption2'] if 'caption2' in data_point else ""
 
         sample=data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg)
+        start_forward = time.time()
         result1, scores1, valid_result1 = eval_step(
             task, None, models, sample, **kwargs)
+        end_forward = time.time()
+        total_forward_time += end_forward - start_forward
         sample=data_preprocess(dataset, img_path, caption2, caption1, use_cuda, cfg)
+        start_backward = time.time()
         result2, scores2, valid_result2 = eval_step(
             task, None, models, sample, **kwargs)
-        
+        end_backward = time.time()
+        total_bidirectional_time +=  end_forward - start_forward + end_backward - start_backward
+
         valid_result = valid_result1 + valid_result2
         answer = valid_result.argmax(1)
         if answer == 1:
             answer = 'yes'
         else:
             answer = 'no'
-        
+
         predict_context_task.append(CONTEXT[answer])
         gt_context_task.append(data_point['context_label'])
-        
+
         macs, params = get_model_complexity_info(models[0], sample, task, as_strings=True,
             print_per_layer_stat=False, verbose=False)
         # Extract the numerical value
@@ -251,9 +260,13 @@ def main(cfg: DictConfig, **kwargs):
         print('Computational complexity: {} {}Flops'.format(flops, flops_unit))
         print('Number of parameters: {:<8}'.format(params))
         GFlops += flops
-    
-    print("accuracy: ", sklearn.metrics.accuracy_score(gt_context_task, predict_context_task))
-    print("f1 - score: ", sklearn.metrics.f1_score(gt_context_task, predict_context_task))
+
+    avg_forward_time = total_forward_time/len(datalines)
+    avg_bidirectional_time = total_bidirectional_time/len(datalines)
+    print("Average forward time: {}".format(avg_forward_time))
+    print("Average bidirectional time: {}".format(avg_bidirectional_time))
+    print("Accuracy: ", sklearn.metrics.accuracy_score(gt_context_task, predict_context_task))
+    print("F1-score: ", sklearn.metrics.f1_score(gt_context_task, predict_context_task))
     print("Average precision: ", sklearn.metrics.average_precision_score(gt_context_task, predict_context_task))
     print(f"Average GFlops per {len(datalines)} samples: {GFlops/len(datalines)} {flops_unit}")
     print('Number of parameters: {:<8}'.format(params))
