@@ -11,17 +11,18 @@ bpe_dir=../../utils/BPE
 # dev or test
 split=test
 export INPUT_FOLDER=/mnt/d/data/COSMOS/icmr2024/
-data=/mnt/d/data/COSMOS/icmr2024/test.json
+# data=/mnt/d/data/COSMOS/icmr2024/manually-augmented-data/new_formatted_annotation.json
+data=/mnt/d/data/COSMOS/icmr2024/test_half.json
 path=/mnt/d/data/COSMOS/OFA/run_scripts/snli_ve/checkpoints/checkpoint.gendata2_testtrain1_mixed_4000.best_snli_score_0.9150.pt
 result_path=../../results/snli_ve
 selected_cols=0,2,3,4,5
 
-CUDA_VISIBLE_DEVICES=0 python ../../inference.py \
+CUDA_VISIBLE_DEVICES=0 python ../../inference_task2.py \
     ${data} \
     --path=${path} \
     --user-dir=${user_dir} \
     --task=snli_ve \
-    --batch-size=2 \
+    --batch-size=1 \
     --log-format=simple --log-interval=10 \
     --seed=7 \
     --gen-subset=${split} \

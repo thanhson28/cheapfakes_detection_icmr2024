@@ -214,16 +214,14 @@ def main(cfg: DictConfig, **kwargs):
     dataset=task.dataset(cfg.dataset.gen_subset)
     datalines = data_fl.readlines()
 
-    predict_context_task1 = []
-    gt_context_task1 = []
-    predict_context_task2 = []
-    gt_context_task2 = []
+    predict_context_task = []
+    gt_context_task = []
     GFlops = 0
     for i,dataline in tqdm(enumerate(datalines)):
         data_point = json.loads(dataline)
         img_path = os.path.join(IMG_PREFIX, data_point['img_local_path'])
-        caption1 = data_point['caption1'] if "caption1" in data_point else ""
-        caption2 = data_point['caption2'] if "caption2" in data_point else ""
+        caption1 = data_point['caption1']
+        caption2 = data_point['caption2'] if 'caption2' in data_point else ""
 
         sample=data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg)
         result1, scores1, valid_result1 = eval_step(
@@ -239,26 +237,8 @@ def main(cfg: DictConfig, **kwargs):
         else:
             answer = 'no'
         
-        predict_context_task1.append(CONTEXT[answer])
-        gt_context_task1.append(data_point['context_label'])
-        
-        sample=data_preprocess(dataset, img_path, caption1, "", use_cuda, cfg)
-        result1, scores1, valid_result1 = eval_step(
-            task, None, models, sample, **kwargs)
-        sample=data_preprocess(dataset, img_path, "", caption1, use_cuda, cfg)
-        result2, scores2, valid_result2 = eval_step(
-            task, None, models, sample, **kwargs)
-        
-        valid_result = valid_result1 + valid_result2
-        answer = valid_result.argmax(1)
-
-        if answer == 1:
-            answer = 'yes'
-        else:
-            answer = 'no'
-        
-        predict_context_task2.append(CONTEXT[answer])
-        gt_context_task2.append(data_point['context_label'])
+        predict_context_task.append(CONTEXT[answer])
+        gt_context_task.append(data_point['context_label'])
         
         macs, params = get_model_complexity_info(models[0], sample, task, as_strings=True,
             print_per_layer_stat=False, verbose=False)
@@ -272,12 +252,9 @@ def main(cfg: DictConfig, **kwargs):
         print('Number of parameters: {:<8}'.format(params))
         GFlops += flops
     
-    print("accuracy task 1: ", sklearn.metrics.accuracy_score(gt_context_task1, predict_context_task1))
-    print("accuracy task 2: ", sklearn.metrics.accuracy_score(gt_context_task2, predict_context_task2))
-    print("f1 - score task 1: ", sklearn.metrics.f1_score(gt_context_task1, predict_context_task1))
-    print("f1 - score task 2: ", sklearn.metrics.f1_score(gt_context_task2, predict_context_task2))
-    print("Average precision task 1: ", sklearn.metrics.average_precision_score(gt_context_task1, predict_context_task1))
-    print("Average precision task 2: ", sklearn.metrics.average_precision_score(gt_context_task2, predict_context_task2))
+    print("accuracy: ", sklearn.metrics.accuracy_score(gt_context_task, predict_context_task))
+    print("f1 - score: ", sklearn.metrics.f1_score(gt_context_task, predict_context_task))
+    print("Average precision: ", sklearn.metrics.average_precision_score(gt_context_task, predict_context_task))
     print(f"Average GFlops per {len(datalines)} samples: {GFlops/len(datalines)} {flops_unit}")
     print('Number of parameters: {:<8}'.format(params))
 
