@@ -16,6 +16,7 @@ from ptflops import get_model_complexity_info
 from fairseq.dataclass.utils import convert_namespace_to_omegaconf
 from fairseq.utils import reset_logging
 from omegaconf import DictConfig
+import time
 
 from utils import checkpoint_utils
 from utils.eval_utils import eval_step
@@ -65,7 +66,7 @@ def data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg):
         label = 'maybe'
     else:
         raise NotImplementedError
-    
+
     image = Image.open(BytesIO(base64.urlsafe_b64decode(image)))
     patch_image = dataset.patch_resize_transform(image)
     patch_mask = torch.tensor([True])
@@ -243,10 +244,10 @@ def main(cfg: DictConfig, **kwargs):
             answer = 'yes'
         else:
             answer = 'no'
-        
+
         predict_context_task.append(CONTEXT[answer])
         gt_context_task.append(data_point['context_label'])
-        
+
         macs, params = get_model_complexity_info(models[0], sample, task, as_strings=True,
             print_per_layer_stat=False, verbose=False)
         # Extract the numerical value
