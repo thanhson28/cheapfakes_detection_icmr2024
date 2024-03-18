@@ -26,6 +26,7 @@ import base64
 import json
 import re
 from time import time
+from utils.cheapfakes import data_preprocess
 
 CONTEXT = {
     'yes': 0,
@@ -48,77 +49,81 @@ def apply_half(t):
         return t.to(dtype=torch.half)
     return t
 
-def data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg):
-    img = Image.open(img_path) # path to file
-    img_buffer = BytesIO()
-    img.save(img_buffer, format=img.format)
-    byte_data = img_buffer.getvalue()
-    base64_str = base64.b64encode(byte_data) # bytes
-    base64_str = base64_str.decode("utf-8") # str
+# def data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg):
+#     img = Image.open(img_path) # path to file
+#     img_buffer = BytesIO()
+#     img.save(img_buffer, format=img.format)
+#     byte_data = img_buffer.getvalue()
+#     base64_str = base64.b64encode(byte_data) # bytes
+#     base64_str = base64_str.decode("utf-8") # str
+#     samples = [[caption1, caption2], [caption2, caption1]]
+#     batches = []
+#     for i, sml in enumerate(samples):
+#         caption1, caption2 = sml
+#         uniq_id, image, hypothesis, caption, label = 0, base64_str, caption1, caption2, "OOC"
+#         if label == 'OOC':
+#             label = 'no'
+#         elif label == 'NOOC':
+#             label = 'yes'
+#         elif label == 'neutral':
+#             label = 'maybe'
+#         else:
+#             raise NotImplementedError
+        
+#         image = Image.open(BytesIO(base64.urlsafe_b64decode(image)))
+#         patch_image = dataset.patch_resize_transform(image)
+#         patch_mask = torch.tensor([True])
 
-    uniq_id, image, hypothesis, caption, label = 0, base64_str, caption1, caption2, "OOC"
-    if label == 'OOC':
-        label = 'no'
-    elif label == 'NOOC':
-        label = 'yes'
-    elif label == 'neutral':
-        label = 'maybe'
-    else:
-        raise NotImplementedError
-    
-    image = Image.open(BytesIO(base64.urlsafe_b64decode(image)))
-    patch_image = dataset.patch_resize_transform(image)
-    patch_mask = torch.tensor([True])
+#         hypothesis = dataset.pre_caption(hypothesis, dataset.max_src_length)
+#         src_item = dataset.encode_text(' does the image describe " {} "?'.format(hypothesis))
+#         tgt_item = dataset.encode_text(" {}".format(label))
+#         ref_dict = {label: 1.0}
 
-    hypothesis = dataset.pre_caption(hypothesis, dataset.max_src_length)
-    src_item = dataset.encode_text(' does the image describe " {} "?'.format(hypothesis))
-    tgt_item = dataset.encode_text(" {}".format(label))
-    ref_dict = {label: 1.0}
+#         if dataset.add_caption:
+#             caption = dataset.pre_caption(caption, dataset.max_src_length)
+#             src_item = dataset.encode_text(' can image and text1 " {} " imply text2 " {} "?'.format(caption, hypothesis))
 
-    if dataset.add_caption:
-        caption = dataset.pre_caption(caption, dataset.max_src_length)
-        src_item = dataset.encode_text(' can image and text1 " {} " imply text2 " {} "?'.format(caption, hypothesis))
+#         src_item = torch.cat([dataset.bos_item, src_item, dataset.eos_item])
+#         if dataset.prompt_type == 'none':
+#             prev_output_item = torch.cat([dataset.bos_item, tgt_item])
+#             target_item = torch.cat([prev_output_item[1:], dataset.eos_item])
+#             decoder_prompt = dataset.bos_item
+#         elif dataset.prompt_type == 'src':
+#             prev_output_item = torch.cat([src_item, tgt_item])
+#             target_item = torch.cat([prev_output_item[1:], dataset.eos_item])
+#             decoder_prompt = src_item
+#         elif dataset.prompt_type == 'prev_output':
+#             prev_output_item = torch.cat([src_item[:-1], tgt_item])
+#             target_item = torch.cat([prev_output_item[1:], dataset.eos_item])
+#             decoder_prompt = src_item[:-1]
+#         else:
+#             raise NotImplementedError
+#         target_item[:-len(tgt_item)-1] = dataset.tgt_dict.pad()
 
-    src_item = torch.cat([dataset.bos_item, src_item, dataset.eos_item])
-    if dataset.prompt_type == 'none':
-        prev_output_item = torch.cat([dataset.bos_item, tgt_item])
-        target_item = torch.cat([prev_output_item[1:], dataset.eos_item])
-        decoder_prompt = dataset.bos_item
-    elif dataset.prompt_type == 'src':
-        prev_output_item = torch.cat([src_item, tgt_item])
-        target_item = torch.cat([prev_output_item[1:], dataset.eos_item])
-        decoder_prompt = src_item
-    elif dataset.prompt_type == 'prev_output':
-        prev_output_item = torch.cat([src_item[:-1], tgt_item])
-        target_item = torch.cat([prev_output_item[1:], dataset.eos_item])
-        decoder_prompt = src_item[:-1]
-    else:
-        raise NotImplementedError
-    target_item[:-len(tgt_item)-1] = dataset.tgt_dict.pad()
-
-    example = {
-        "id": uniq_id,
-        "source": src_item,
-        "patch_image": patch_image,
-        "patch_mask": patch_mask,
-        "target": target_item,
-        "prev_output_tokens": prev_output_item,
-        "decoder_prompt": decoder_prompt,
-        "ref_dict": ref_dict,
-    }
-    if dataset.constraint_trie is not None:
-        constraint_mask = torch.zeros((len(target_item), len(dataset.tgt_dict))).bool()
-        start_idx = len(target_item) - len(tgt_item) - 1
-        for i in range(len(target_item)-len(tgt_item)-1, len(target_item)):
-            constraint_prefix_token = [dataset.tgt_dict.bos()] + target_item[start_idx:i].tolist()
-            constraint_nodes = dataset.constraint_trie.get_next_layer(constraint_prefix_token)
-            constraint_mask[i][constraint_nodes] = True
-        example["constraint_mask"] = constraint_mask
-    sample = dataset.collater([example])
-    sample = utils.move_to_cuda(sample) if use_cuda else sample
-    sample = utils.apply_to_sample(
-        apply_half, sample) if cfg.common.fp16 else sample
-    return sample
+#         example = {
+#             "id": uniq_id,
+#             "source": src_item,
+#             "patch_image": patch_image,
+#             "patch_mask": patch_mask,
+#             "target": target_item,
+#             "prev_output_tokens": prev_output_item,
+#             "decoder_prompt": decoder_prompt,
+#             "ref_dict": ref_dict,
+#         }
+#         if dataset.constraint_trie is not None:
+#             constraint_mask = torch.zeros((len(target_item), len(dataset.tgt_dict))).bool()
+#             start_idx = len(target_item) - len(tgt_item) - 1
+#             for i in range(len(target_item)-len(tgt_item)-1, len(target_item)):
+#                 constraint_prefix_token = [dataset.tgt_dict.bos()] + target_item[start_idx:i].tolist()
+#                 constraint_nodes = dataset.constraint_trie.get_next_layer(constraint_prefix_token)
+#                 constraint_mask[i][constraint_nodes] = True
+#             example["constraint_mask"] = constraint_mask
+#         batches.append(example)
+#     sample = dataset.collater(batches)
+#     sample = utils.move_to_cuda(sample) if use_cuda else sample
+#     sample = utils.apply_to_sample(
+#         apply_half, sample) if cfg.common.fp16 else sample
+#     return sample
 
 def main(cfg: DictConfig, **kwargs):
     utils.import_user_module(cfg.common)
@@ -228,21 +233,13 @@ def main(cfg: DictConfig, **kwargs):
         caption2 = data_point['caption2'] if "caption2" in data_point else ""
 
         sample=data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg)
-        inference_time = 0 
+
         start = time()
-        result1, scores1, valid_result1 = eval_step(
+        result, scores, valid_result = eval_step(
             task, None, models, sample, **kwargs)
-        inference_time += time() - start
-        sample=data_preprocess(dataset, img_path, caption2, caption1, use_cuda, cfg)
-        start = time()
-        result2, scores2, valid_result2 = eval_step(
-            task, None, models, sample, **kwargs)
-        inference_time += time() - start
-        inference_times += inference_time
-        print(f"Inference time for {i}th sample: {inference_time} seconds")
+        inference_times += time() - start
         
-        valid_result = valid_result1 + valid_result2
-        answer = valid_result.argmax(1)
+        answer = valid_result.sum(0, keepdim=True).argmax()
         if answer == 1:
             answer = 'yes'
         else:
@@ -252,14 +249,10 @@ def main(cfg: DictConfig, **kwargs):
         gt_context_task1.append(data_point['context_label'])
         
         sample=data_preprocess(dataset, img_path, caption1, "", use_cuda, cfg)
-        result1, scores1, valid_result1 = eval_step(
-            task, None, models, sample, **kwargs)
-        sample=data_preprocess(dataset, img_path, "", caption1, use_cuda, cfg)
-        result2, scores2, valid_result2 = eval_step(
+        result, scores, valid_result = eval_step(
             task, None, models, sample, **kwargs)
         
-        valid_result = valid_result1 + valid_result2
-        answer = valid_result.argmax(1)
+        answer = valid_result.sum(0, keepdim=True).argmax()
 
         if answer == 1:
             answer = 'yes'
@@ -290,6 +283,7 @@ def main(cfg: DictConfig, **kwargs):
     print(f"Average GFlops per {len(datalines)} samples: {GFlops/len(datalines)} {flops_unit}")
     print('Number of parameters: {:<8}'.format(params))
     print(f"Average inference time per {len(datalines)} samples: {inference_times/len(datalines)} seconds")
+
 def cli_main():
     parser = options.get_generation_parser()
     parser.add_argument(

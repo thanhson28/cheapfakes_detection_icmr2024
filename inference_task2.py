@@ -22,6 +22,7 @@ from utils.eval_utils import eval_step
 from PIL import Image
 from io import BytesIO
 from tqdm import tqdm
+from time import time
 import base64
 import json
 import re
@@ -217,19 +218,24 @@ def main(cfg: DictConfig, **kwargs):
     predict_context_task = []
     gt_context_task = []
     GFlops = 0
+    inference_time_cap1_cap2 = 0
+    inference_time_cap2_cap1 = 0
     for i,dataline in tqdm(enumerate(datalines)):
         data_point = json.loads(dataline)
         img_path = os.path.join(IMG_PREFIX, data_point['img_local_path'])
-        caption1 = data_point['caption1'] if 'caption1' in data_point else ""
+        caption1 = data_point['caption1']
         caption2 = data_point['caption2'] if 'caption2' in data_point else ""
-        caption2 = ""
 
-        sample=data_preprocess(dataset, img_path, caption1, caption2, use_cuda, cfg)
+        sample=data_preprocess(dataset, img_path, caption1, "", use_cuda, cfg)
+        start = time()
         result1, scores1, valid_result1 = eval_step(
             task, None, models, sample, **kwargs)
-        sample=data_preprocess(dataset, img_path, caption2, caption1, use_cuda, cfg)
+        inference_time_cap1_cap2 += time() - start
+        sample=data_preprocess(dataset, img_path, "", caption1, use_cuda, cfg)
+        start = time()
         result2, scores2, valid_result2 = eval_step(
             task, None, models, sample, **kwargs)
+        inference_time_cap2_cap1 += time() - start
         
         valid_result = valid_result1 + valid_result2
         answer = valid_result.argmax(1)
@@ -253,11 +259,13 @@ def main(cfg: DictConfig, **kwargs):
         print('Number of parameters: {:<8}'.format(params))
         GFlops += flops
     
-    print("accuracy: ", sklearn.metrics.accuracy_score(gt_context_task, predict_context_task))
-    print("f1 - score: ", sklearn.metrics.f1_score(gt_context_task, predict_context_task))
-    print("Average precision: ", sklearn.metrics.average_precision_score(gt_context_task, predict_context_task))
-    print(f"Average GFlops per {len(datalines)} samples: {GFlops/len(datalines)} {flops_unit}")
+    print("accuracy task 2: ", sklearn.metrics.accuracy_score(gt_context_task, predict_context_task))
+    print("f1 - score task 2: ", sklearn.metrics.f1_score(gt_context_task, predict_context_task))
+    print("Average precision task 2: ", sklearn.metrics.average_precision_score(gt_context_task, predict_context_task))
+    print(f"Average GFlops per {len(datalines)} samples for task 2: {GFlops/len(datalines)} {flops_unit}")
     print('Number of parameters: {:<8}'.format(params))
+    print(f"Average inference time (cap1, cap2 direction) per {len(datalines)} samples for task 2: {inference_time_cap1_cap2/len(datalines)} seconds")
+    print(f"Average inference time (cap1, cap2 direction) per {len(datalines)} samples for task 2: {inference_time_cap2_cap1/len(datalines)} seconds")
 
 def cli_main():
     parser = options.get_generation_parser()
