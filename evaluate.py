@@ -145,7 +145,6 @@ def main(cfg: DictConfig, **kwargs):
 
     # Initialize generator
     extra_gen_cls_kwargs = {"lm_model": lms[0], "lm_weight": cfg.generation.lm_weight}
-    import ipdb; ipdb.set_trace()
     generator = task.build_generator(models, cfg.generation, extra_gen_cls_kwargs=extra_gen_cls_kwargs)
 
     results = []
@@ -157,7 +156,6 @@ def main(cfg: DictConfig, **kwargs):
         sample = utils.move_to_cuda(sample) if use_cuda else sample
         sample = utils.apply_to_sample(
             apply_half, sample) if cfg.common.fp16 else sample
-        import ipdb; ipdb.set_trace()
         with torch.no_grad():
             if kwargs["zero_shot"]:
                 result, scores = zero_shot_step(
@@ -172,7 +170,6 @@ def main(cfg: DictConfig, **kwargs):
         else:
             score_sum += sum(scores) if scores is not None else 0
             score_cnt += len(scores) if scores is not None else 0
-        
         progress.log({"sentences": sample["nsentences"]})
 
     merge_results(task, cfg, logger, score_cnt, score_sum, results)
