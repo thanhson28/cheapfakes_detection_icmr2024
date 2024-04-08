@@ -33,7 +33,7 @@ from time import time
 from utils.cheapfakes import data_preprocess
 
 
-# Set the path to your service account JSON key file
+# TODO: Update this with the trusted links
 FAMOUS_PAGES = [
     "https://www.bbc.com",
     "https://nytimes.com",
