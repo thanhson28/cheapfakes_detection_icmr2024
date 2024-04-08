@@ -155,16 +155,16 @@ def main(cfg: DictConfig, **kwargs):
         result, scores, valid_result = eval_step(
             task, None, models, sample, **kwargs)
         inference_times += time() - start
-        
+
         answer = valid_result.sum(0, keepdim=True).argmax()
         if answer == 1:
             answer = 'yes'
         else:
             answer = 'no'
-        
+
         predict_context_task.append(CONTEXT[answer])
         gt_context_task.append(data_point['context_label'])
-        
+
         macs, params = get_model_complexity_info(models[0], sample, task, as_strings=True,
             print_per_layer_stat=False, verbose=False)
         # Extract the numerical value
@@ -176,7 +176,7 @@ def main(cfg: DictConfig, **kwargs):
         print('Computational complexity: {} {}Flops'.format(flops, flops_unit))
         print('Number of parameters: {:<8}'.format(params))
         GFlops += flops
-    
+
     print("accuracy task 1: ", sklearn.metrics.accuracy_score(gt_context_task, predict_context_task))
     print("f1 - score task 1: ", sklearn.metrics.f1_score(gt_context_task, predict_context_task))
     print("Average precision task 1: ", sklearn.metrics.average_precision_score(gt_context_task, predict_context_task))
