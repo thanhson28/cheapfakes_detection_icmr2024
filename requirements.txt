@@ -16,3 +16,4 @@ python-Levenshtein
 zhconv
 pypinyin==0.47.1
 g2p_en
+selenium<4.10.0

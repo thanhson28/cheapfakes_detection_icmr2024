@@ -23,24 +23,20 @@ class SearchByImageInstance:
     def __init__(self):
         pass
 
-
+    # This work with `selenium<4.10.0`
+    # Problems with 4.10 here
+    # https://github.com/SeleniumHQ/selenium/commit/9f5801c82fb3be3d5850707c46c3f8176e3ccd8e
     def search(self, uploaded_im_url, limit_page=None):
-        # first_image = driver.find_element_by_xpath("//img[@class="rg_i"]")
-        # uploaded_im_url =
         start = 0
         pages = []
         p = 0
-        # import ipdb; ipdb.set_trace()
         options = webdriver.ChromeOptions()
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--no-sandbox")
         options.add_argument("--headless")
         driver = webdriver.Chrome(
             ChromeDriverManager().install(), options=options)
-        # driver.get(f"file://{uploaded_im_url}")
-        # img = driver.find_element(By.TAG_NAME, "img")
-        # img_src = img.get_attribute("src")
-        # import ipdb; ipdb.set_trace()
+
         while True:
             params = {
                 "hl": self.lang,
@@ -49,26 +45,29 @@ class SearchByImageInstance:
                 "start": str(start)
             }
             html = self.call_google_by_chrome(driver, params)
-            # with open(root_path+"temp.html", "w") as temp:
-            #     import ipdb; ipdb.set_trace()
-            #     temp.write(html.encode("utf-8").strip())
+            # print("HTML content:", html)  # Debug print
+
             try:
                 records = self.parse_html(html)
-            except:
-                with open("error.html", "w") as out: out.write(html)
+                # import ipdb; ipdb.set_trace()
+                # print("Parsed records:", records)  # Debug print
+            except Exception as e:
+                # print("Error parsing HTML:", e)  # Debug print
+                # Log the error or raise it if needed
                 raise RuntimeError("Cannot parse HTML correctly")
+
             if records is None:
-                raise ConnectionRefusedError(
-                    "Google limits queries, try again later",
-                )
+                raise ConnectionRefusedError("Google limits queries, try again later")
+
             if len(records) == 0:
                 break
-            pages += records
 
+            pages += records
             start += self.pagination
             p += 1
             if limit_page and p >= limit_page:
                 break
+
         driver.close()
         return self.format(pages)
 
@@ -90,11 +89,14 @@ class SearchByImageInstance:
             return None
         soup = BeautifulSoup(html, features="html.parser")
         search_result = soup.find("div", id="rso")
+        # print("Search result:", search_result)  # Debug print
         if not search_result:
             return []
         pages_including_tag = search_result.findChildren(recursive=False)[-1]
+        # print("Pages including tag:", pages_including_tag)  # Debug print
         pages_including_records = pages_including_tag.findChildren(
             recursive=False)[0].find_all("div", lang=True)
+        # print("Pages including records:", pages_including_records)  # Debug print
 
         pages_including = []
         for tag in pages_including_records:
@@ -103,11 +105,15 @@ class SearchByImageInstance:
             }
             a = tag.find_all("a", href=True)[0]
             data["link"] = a["href"]
+            # print("Link:", data["link"])  # Debug print
             data["title"] = a.text
+            # print("Title:", data["title"])  # Debug print
             info_tags = a.parent.parent.parent.findChildren(recursive=False)
-            if len(info_tags) < 3:
-                return []
-            info_tags = info_tags[2].find_all("span")
+            # print("Info tags:", info_tags)  # Debug print
+            # print("Length of info tags:", len(info_tags))  # Debug print
+            # if len(info_tags) < 3:
+            #     return []
+            info_tags = info_tags[-1].find_all("span")
             i_ = 0
             for i in range(1, len(info_tags)):
                 size = self.find_and_format_size(info_tags[i].text)
