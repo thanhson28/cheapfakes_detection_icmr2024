@@ -241,6 +241,9 @@ def main(cfg: DictConfig, **kwargs):
         img_path = os.path.join(IMG_PREFIX, data_point["img_local_path"])
         search_results[i] = search_images(img_path)
 
+    with open("search_result.json", "w") as json_file:
+        json.dump(search_results, json_file)
+
     for i, dataline in tqdm(enumerate(datalines)):
         data_point = json.loads(dataline)
         img_path = os.path.join(IMG_PREFIX, data_point["img_local_path"])
