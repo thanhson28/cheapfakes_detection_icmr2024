@@ -6,3 +6,6 @@
 *.log
 *checkpoints*
 test/
+
+# file json contains google visual search API
+visualsearch*.json
