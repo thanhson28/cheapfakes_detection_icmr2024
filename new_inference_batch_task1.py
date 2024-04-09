@@ -71,7 +71,7 @@ def search_images(img_path):
     drive_service = build("drive", "v3", credentials=credentials)
 
     # Define the path to your local image file
-    img_path = "/Users/vanloc1808/Downloads/2.jpg"
+    # img_path = "/Users/vanloc1808/Downloads/2.jpg"
 
     # Create a file metadata dictionary
     file_metadata = {
