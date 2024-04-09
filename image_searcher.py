@@ -5,6 +5,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 import os
 from google.oauth2 import service_account
+import time
 
 SERVICE_ACCOUNT_FILE = "sunlit-fuze-419806-50ba9cdd1ddd.json"
 
@@ -65,6 +66,8 @@ for image in image_list:
     if image in search_results:
         print(f"Skipping {image}")
         continue
+    # Sleep for 10 seconds
+    time.sleep(10)
     print(f"Searching for {image}")
     image_path = os.path.join("test", image)
     result = search_images(image_path)
@@ -74,6 +77,8 @@ for image in image_list:
     # Write to JSON file
     with open("search_results.json", "w") as f:
         json.dump(search_results, f, indent=4)
+    # Sleep for 10 seconds
+    time.sleep(10)
 
 # with open("search_results.json", "r") as f:
 #     search_results = json.load(f)
