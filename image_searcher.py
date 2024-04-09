@@ -1,3 +1,4 @@
+import json
 import io
 from search_engine import SearchByImageService
 from googleapiclient.discovery import build
@@ -56,10 +57,14 @@ def search_images(img_path):
 # Get the list of file names in test/ directory
 image_list = os.listdir("test/")
 print(image_list)
-import json
 
-search_results = {}
+with open("search_results.json", "r") as f:
+    search_results = json.load(f)
+
 for image in image_list:
+    if image in search_results:
+        print(f"Skipping {image}")
+        continue
     print(f"Searching for {image}")
     image_path = os.path.join("test", image)
     result = search_images(image_path)
@@ -69,4 +74,9 @@ for image in image_list:
     # Write to JSON file
     with open("search_results.json", "w") as f:
         json.dump(search_results, f, indent=4)
+
+# with open("search_results.json", "r") as f:
+#     search_results = json.load(f)
+
+# print(len(search_results))
 
