@@ -234,10 +234,22 @@ def main(cfg: DictConfig, **kwargs):
     gt_context_task = []
     GFlops = 0
     inference_times = 0
-    for i,dataline in tqdm(enumerate(datalines)):
+
+    search_results = {}
+    for i, dataline in tqdm(enumerate(datalines)):
         data_point = json.loads(dataline)
         img_path = os.path.join(IMG_PREFIX, data_point["img_local_path"])
-        if not search_image_and_check_legit(img_path):
+        search_results[i] = search_images(img_path)
+
+    for i, dataline in tqdm(enumerate(datalines)):
+        data_point = json.loads(dataline)
+        img_path = os.path.join(IMG_PREFIX, data_point["img_local_path"])
+        # if not search_image_and_check_legit(img_path):
+        #     answer = "no"
+        #     predict_context_task.append(CONTEXT[answer])
+        #     gt_context_task.append(data_point["context_label"])
+        #     continue
+        if not check_famous(search_results[i]):
             answer = "no"
             predict_context_task.append(CONTEXT[answer])
             gt_context_task.append(data_point["context_label"])
