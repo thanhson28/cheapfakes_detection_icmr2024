@@ -93,3 +93,24 @@ with open(
     "w",
 ) as f:
     json.dump(filtered_result_cosmos_hybrid, f, indent=4)
+
+filtered_result_end_to_end_hybrid = {}
+for key in new_cosmos_false_predictions.keys():
+    end_to_end_prediction = end_to_end_result[key]
+    hybrid_prediction = hybrid_result[key]
+    if (
+        end_to_end_prediction[0] == end_to_end_prediction[1]
+        or hybrid_prediction[0] != hybrid_prediction[1]
+    ):
+        continue
+    filtered_result_end_to_end_hybrid[key] = {
+        "end_to_end": end_to_end_prediction,
+        "hybrid": hybrid_prediction,
+    }
+print(filtered_result_end_to_end_hybrid.keys())
+print(len(filtered_result_end_to_end_hybrid))
+with open(
+    "prediction_results/filtered_result_end_to_end_hybrid.json",
+    "w",
+) as f:
+    json.dump(filtered_result_end_to_end_hybrid, f, indent=4)
