@@ -5,6 +5,8 @@
 ```
 ## Our Publication was accepted at ICMR 2024: [A Unified Network for Detecting Out-Of-Context Information Using Generative Synthetic Data](https://dl.acm.org/doi/10.1145/3652583.3657599)
 ## For infer Cheapfakes detection Challenge result, please follow Google Colab file: cheapfakes_detection_ICMR2024.ipynb
+## To access generative data and our checkpoints please contact us at: 
+[Minh-Triet Tran](mailto:tmtriet@selab.hcmus.edu.vn), [Thanh-Son Nguyen](mailto:nthanhson@selab.hcmus.edu.vn), [Van-Loc Nguyen](mailto:nvloc@selab.hcmus.edu.vn), [Bao-Tin Nguyen](mailto:nbtin@selab.hcmus.edu.vn)
 ## If you use this repo please cite us by:
 ```
 @inproceedings{10.1145/3652583.3657599,
