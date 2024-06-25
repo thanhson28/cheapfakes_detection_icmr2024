@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "planar-method-329311",
+  "private_key_id": "fd955d17ccd902e7ca50bdbb65b301fad22094b5",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDNaTsSTWyYmzBz\naoSbVr5QKB5YUVOeGRx1nj6HtBXlJbi0fPyaqQ49nlpzfAlkzv4Q8H3z8JD0kDk3\nZvHKatDwVduEyG1s5jslX65QWG/+OkUH9QuEpMA8Dk1KbTL05fucuJypNlgPLl7a\n+faSMszLS7Qi0LG+x44L6waOxEOpHcXn98WCYdQ7tUtnM0JZGBpz++htzjM4XBcQ\nwzwacLZV1jwZUjjlLarOp5KBp9KEtDL9KTw+eVcbwI5OgHftgVJGOcx30JiIfAaL\nrH0ZqHbsGTKssEMXuEfaJS3Xp71Efn4BcYObyMkxKXJG3WeRd4RlbxO1x0rfsDtt\nKU1a95tTAgMBAAECggEABZPTZkpS5gvks2WThzJCRaPpOwWuSw8sficXVJD3vTqa\netAf/cUUXWj01Mjr6mBSdrxI9zwze2iFHTN+4junQ7dZGBBnJDtWJMwlzAmytMj5\nQd+N+gKNM7RBtgEkDpFGFTnQCyouFu9v5Os/njWh6O07zWw0P1Vkzn8JtQuwOKHJ\nWDpZL4u7CAtvY5tz6Ha5jbVOIsKSzwYqkHGKzyDBtmIz3xBZFvjdE+L+An5YEbhd\nJjWmB6bTzBvtCKAWfTFYhJOpqGKjCn6NE0K+ZNa+cG6efPJ5dYyz6DgFxlfYoQmt\nzzv0cBrWExX1VZOcBSxFDMzUCGnEtlVMZ9+eY3je9QKBgQD1MxftE3edFNluCTMF\n5X8j24KuPONRyiLb8UxwZml5f/g+53PONKVAmQbCiqimMAmIIhkkG/QaT1wdulai\nEg4HPJPbqBAe+BbCjUhRL1CSHJCAilmuYv73rUGS5cIz35W0xl19ry/eTU9LVdid\nLs6iieo1YZvQ9UkCam+mLrC9dwKBgQDWdXncVS0HEA/O1MfXL4hF31hgqhcJMalt\n9juPi4WkZRe2YIUhDw5XiySs79MkjZK7v6++wRNOpXIobN86KN8DsabFJJZVlHt7\naDoR78pLgHli234DHZMyQ3w+B778bWy6bPW3OU67SIzEP4C2a4mPfLt81BcsgQYV\nF7mv73VYBQKBgQDYV5xksSh4kEzHqZY7PaJQIP3MfiyTnaXkKaMoCTRG34JI/i5P\nYmPr+xjbzTvAZeIDGxLTqVZXYG4GTMLjfMqj1+8df8u5h2uNfNqxxu1v/YQB5g/6\nrZ4JKfURh2cyHbQZLGyQ2GGD4vJzperZxNLM1qKvNtAkLkecugyIs+l9QQKBgQCk\nF1T7moyOZ+LAjhyucKcjV2ZG6D4iAcay5YHjLo0+IT/Igwe6KMv/fe69B++Ve2G3\nmE6/dPnx5jN37P3MgXNKX0bMd1cz+h2VakVsbf5qUM4QLwO3HI0BG5PX3pNqj8tu\nxWopHIc6U6OpkTFJ4vRpPrYyKBHnMn3V68ZfcKhnhQKBgG03H5/vR+T4l2Qy9f99\n3TCsupJj3z/f9U+glhM0RHNmPhCJ4ISJVMxGUncAS/sNjkJezS73yEUgDGpYH6TC\nXXRGXq+TjIsRp0JvueTkwRjlwlWxcbaHoJiGPUM6IzllLKHl836FzURscX3IKYfj\ny99/kVx9iQxMRJI4HS/OWqao\n-----END PRIVATE KEY-----\n",
+  "client_email": "cheapfakes-593@planar-method-329311.iam.gserviceaccount.com",
+  "client_id": "114754049875152070984",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/cheapfakes-593%40planar-method-329311.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
