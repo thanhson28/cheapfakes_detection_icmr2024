@@ -5,3 +5,9 @@
 *__pycache__
 *.log
 *checkpoints*
+test/
+
+# file json contains google visual search API
+visualsearch*.json
+search_results_csv/
+thumbnails/
